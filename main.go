@@ -16,66 +16,66 @@ type repository struct {
 func (repo *repository) initRepository() error {
 	var err error
 	repo.db, err = sql.Open("postgres", "host=172.24.96.1 port=5432 user=postgres "+
-		"password=postgres dbname=habbits sslmode=disable")
+		"password=postgres dbname=habits sslmode=disable")
 	if err != nil {
 		return fmt.Errorf("open db: [%w]", err)
 	}
 	return err
 }
 
-func (repo *repository) GetHabbit(name string) (*habbit, error) {
-	var h habbit
+func (repo *repository) GetHabit(name string) (*habit, error) {
+	var h habit
 
-	err := repo.db.QueryRow("SELECT * FROM habbits WHERE name = $1", name).
-		Scan(&h.habbitID, &h.name, &h.count, &h.lastRepeteation)
+	err := repo.db.QueryRow("SELECT * FROM habits WHERE name = $1", name).
+		Scan(&h.habitID, &h.name, &h.count, &h.lastRepetetion)
 	if err != nil {
-		return nil, fmt.Errorf("query habbit by name: [%w]", err)
+		return nil, fmt.Errorf("query habit by name: [%w]", err)
 	}
 
 	return &h, nil
 }
 
-func (repo *repository) GetHabbits() ([]*habbit, error) {
+func (repo *repository) GetHabits() ([]*habit, error) {
 	var listLen int64
-	err := repo.db.QueryRow("SELECT COUNT(*) FROM habbits").Scan(&listLen)
+	err := repo.db.QueryRow("SELECT COUNT(*) FROM habits").Scan(&listLen)
 	if err != nil {
 		return nil, fmt.Errorf("query row list len: [%w]", err)
 	}
 
-	rows, err := repo.db.Query("SELECT * FROM habbits")
+	rows, err := repo.db.Query("SELECT * FROM habits")
 	if err != nil {
-		return nil, fmt.Errorf("query all habbits info: [%w]", err)
+		return nil, fmt.Errorf("query all habits info: [%w]", err)
 	}
 	defer rows.Close()
 
-	var habbits []*habbit
+	var habits []*habit
 	for rows.Next() {
-		h := new(habbit)
-		err = rows.Scan(&h.habbitID, &h.name, &h.count, &h.lastRepeteation)
+		h := new(habit)
+		err = rows.Scan(&h.habitID, &h.name, &h.count, &h.lastRepetetion)
 		if err != nil {
-			return nil, fmt.Errorf("scan habbit in all: [%w]", err)
+			return nil, fmt.Errorf("scan habit in all: [%w]", err)
 		}
-		habbits = append(habbits, h)
+		habits = append(habits, h)
 	}
 
-	return habbits, nil
+	return habits, nil
 }
 
-func (repo *repository) UpdateRepeteationOfHabbit(name string, count int64) error {
-	_, err := repo.db.Exec(`UPDATE habbits SET count = $1, last_repeteation = $2
+func (repo *repository) UpdateRepetetionOfHabit(name string, count int64) error {
+	_, err := repo.db.Exec(`UPDATE habits SET count = $1, last_repetetion = $2
                WHERE name = $3`, count, time.Now(), name)
 	if err != nil {
-		return fmt.Errorf("update habbit: [%w]", err)
+		return fmt.Errorf("update habit: [%w]", err)
 	}
 
 	return nil
 }
 
-func (repo *repository) AddNewHabbit(name string) error {
-	_, err := repo.db.Exec("INSERT INTO habbits (name, count, last_repeteation) VALUES ($1, $2, $3)",
+func (repo *repository) AddNewHabit(name string) error {
+	_, err := repo.db.Exec("INSERT INTO habits (name, count, last_repetetion) VALUES ($1, $2, $3)",
 		name, 0, time.Now())
 	if err != nil {
-		return fmt.Errorf("exec add new habbit: [%w]", err)
+		return fmt.Errorf("exec add new habit: [%w]", err)
 	}
 
 	return nil
@@ -92,40 +92,40 @@ func initResources(repo *repository) {
 	}
 }
 
-type habbit struct {
-	habbitID        int64
-	name            string
-	count           int64
-	lastRepeteation time.Time
+type habit struct {
+	habitID        int64
+	name           string
+	count          int64
+	lastRepetetion time.Time
 }
 
-func PrintHabbitInfo(name string, repo *repository) error {
+func PrintHabitInfo(name string, repo *repository) error {
 
-	h, err := repo.GetHabbit(name)
+	h, err := repo.GetHabit(name)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Habbit %s has %d repetetion with last time %s\n", h.name, h.count, h.lastRepeteation)
+	fmt.Printf("Habit %s has %d repetetion with last time %s\n", h.name, h.count, h.lastRepetetion)
 
 	return nil
 }
 
-func PrintAllHabbitsInfo(repo *repository) error {
-	hs, err := repo.GetHabbits()
+func PrintAllHabitsInfo(repo *repository) error {
+	hs, err := repo.GetHabits()
 	if err != nil {
 		return err
 	}
 
 	for _, h := range hs {
-		fmt.Printf("Habbit %s has %d repetetion with last time %s\n", h.name, h.count, h.lastRepeteation)
+		fmt.Printf("Habit %s has %d repetetion with last time %s\n", h.name, h.count, h.lastRepetetion)
 	}
 
 	return nil
 }
 
-func AddNewHabbit(name string, repo *repository) error {
-	err := repo.AddNewHabbit(name)
+func AddNewHabit(name string, repo *repository) error {
+	err := repo.AddNewHabit(name)
 	if err != nil {
 		return err
 	}
@@ -133,15 +133,15 @@ func AddNewHabbit(name string, repo *repository) error {
 	return nil
 }
 
-func AddRepeteationOfHabbit(name string, repo *repository) error {
-	h, err := repo.GetHabbit(name)
+func AddRepetetionOfHabit(name string, repo *repository) error {
+	h, err := repo.GetHabit(name)
 	if err != nil {
 		return err
 	}
 
 	h.count++
 
-	err = repo.UpdateRepeteationOfHabbit(name, h.count)
+	err = repo.UpdateRepetetionOfHabit(name, h.count)
 	if err != nil {
 		return err
 	}
@@ -160,24 +160,24 @@ func Scan(repo *repository) {
 			switch v {
 			case "add":
 				i++
-				err := AddNewHabbit(os.Args[i], repo)
+				err := AddNewHabit(os.Args[i], repo)
 				if err != nil {
 					log.Fatal(err)
 				}
 			case "done":
 				i++
-				err := AddRepeteationOfHabbit(os.Args[i], repo)
+				err := AddRepetetionOfHabit(os.Args[i], repo)
 				if err != nil {
 					log.Fatal(err)
 				}
 			case "list":
-				err := PrintAllHabbitsInfo(repo)
+				err := PrintAllHabitsInfo(repo)
 				if err != nil {
 					log.Fatal(err)
 				}
 			case "info":
 				i++
-				err := PrintHabbitInfo(os.Args[i], repo)
+				err := PrintHabitInfo(os.Args[i], repo)
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -193,7 +193,7 @@ func Run() {
 	var err error
 
 	repo.db, err = sql.Open("postgres", "host=172.24.96.1 port=5432 user=postgres "+
-		"password=postgres dbname=habbits sslmode=disable")
+		"password=postgres dbname=habits sslmode=disable")
 	if err != nil {
 		log.Fatal(fmt.Errorf("open db: [%w]", err))
 	}
