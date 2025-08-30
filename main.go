@@ -23,6 +23,66 @@ func (repo *repository) initRepository() error {
 	return err
 }
 
+func (repo *repository) GetHabbit(name string) (*habbit, error) {
+	var h *habbit
+
+	err := repo.db.QueryRow("SELECT * FROM habbits WHERE name = $1", name).
+		Scan(&h.habbitID, &h.name, &h.count, &h.lastRepeteation)
+	if err != nil {
+		return nil, fmt.Errorf("query habbit by name: [%w]", err)
+	}
+
+	return h, nil
+}
+
+func (repo *repository) GetHabbits() ([]*habbit, error) {
+	var listLen int64
+	err := repo.db.QueryRow("SELECT COUNT(*) FROM habbits").Scan(&listLen)
+	if err != nil {
+		return nil, fmt.Errorf("query row list len: [%w]", err)
+	}
+
+	rows, err := repo.db.Query("SELECT * FROM habbits")
+	if err != nil {
+		return nil, fmt.Errorf("query all habbits info: [%w]", err)
+	}
+	defer rows.Close()
+
+	habbits := make([]*habbit, 0, listLen)
+	var i int64 = 0
+
+	for rows.Next() {
+		err = rows.Scan(&habbits[i].habbitID, &habbits[i].name, &habbits[i].count, &habbits[i].lastRepeteation)
+		if err != nil {
+			return nil, fmt.Errorf("scan habbit in all: [%w]", err)
+		}
+
+		i++
+	}
+
+	return habbits, nil
+}
+
+func (repo *repository) UpdateRepeteationOfHabbit(name string, count int64) error {
+	_, err := repo.db.Exec(`UPDATE habbits SET count = $1, last_repeteation = $2
+               WHERE name = $3`, count, time.Now(), name)
+	if err != nil {
+		return fmt.Errorf("update habbit: [%w]", err)
+	}
+
+	return nil
+}
+
+func (repo *repository) AddNewHabbit(name string) error {
+	_, err := repo.db.Exec("INSERT INTO habbits (name, count, lastRepeteation) VALUES ($1, $2, $3)",
+		name, 0, time.Now())
+	if err != nil {
+		return fmt.Errorf("exec add new habbit: [%w]", err)
+	}
+
+	return nil
+}
+
 type Resources struct {
 	db *sql.DB
 }
@@ -41,21 +101,11 @@ type habbit struct {
 	lastRepeteation time.Time
 }
 
-func GetHabbitInfo(name string, repo repository) (*habbit, error) {
-	var h *habbit
+func PrintHabbitInfo(name string) error {
 
-	err := repo.db.QueryRow("SELECT * FROM habbits WHERE name = $1", name).
-		Scan(&h.habbitID, &h.name, &h.count, &h.lastRepeteation)
-	if err != nil {
-		return nil, fmt.Errorf("query habbit by name: [%w]", err)
-	}
+	repo := new(repository)
 
-	return h, nil
-}
-
-func PrintHabbitInfo(name string, repo repository) error {
-
-	h, err := GetHabbitInfo(name, repo)
+	h, err := repo.GetHabbit(name)
 	if err != nil {
 		return err
 	}
@@ -65,78 +115,89 @@ func PrintHabbitInfo(name string, repo repository) error {
 	return nil
 }
 
-func PrintAllHabbitsInfo(repo repository) error {
-	rows, err := repo.db.Query("SELECT * FROM habbits")
+func PrintAllHabbitsInfo() error {
+	repo := new(repository)
+	hs, err := repo.GetHabbits()
 	if err != nil {
-		return fmt.Errorf("query all habbits info: [%w]", err)
+		return err
 	}
 
-	for rows.Next() {
-		var h *habbit
-		err = rows.Scan(&h.habbitID, &h.name, &h.count, &h.lastRepeteation)
-		if err != nil {
-			return fmt.Errorf("scan habbit in all: [%w]", err)
-		}
-
+	for _, h := range hs {
 		fmt.Printf("Habbit %s has %d repetetion with last time %s\n", h.name, h.count, h.lastRepeteation)
 	}
 
 	return nil
 }
 
-func AddNewHabbit(name string, repo repository) error {
-	_, err := repo.db.Exec("INSERT INTO habbits (name, count, lastRepeteation) VALUES ($1, $2, $3)",
-		name, 0, time.Now())
+func AddNewHabbit(name string) error {
+	repo := new(repository)
+	err := repo.AddNewHabbit(name)
 	if err != nil {
-		return fmt.Errorf("exec add new habbit: [%w]", err)
+		return err
 	}
+
 	return nil
 }
 
-func AddRepeteationOfHabbit(name string, repo repository) error {
-
-	h, err := GetHabbitInfo(name, repo)
+func AddRepeteationOfHabbit(name string) error {
+	repo := new(repository)
+	h, err := repo.GetHabbit(name)
 	if err != nil {
 		return err
 	}
 
 	h.count++
 
-	_, err = repo.db.Exec(`UPDATE habbits SET count = $1, last_repeteation = $2
-               WHERE name = $3`, h.count, time.Now(), name)
+	err = repo.UpdateRepeteationOfHabbit(name, h.count)
 	if err != nil {
-		return fmt.Errorf("update habbit: [%w]", err)
+		return err
 	}
-
 
 	return nil
 }
 
 func Scan() {
-	
+
 	for i, v := range os.Args {
 		if i == 0 {
 			continue
 		}
 
-		switch v {
-		case "-add":
-			i++
-			AddNewHabbit(os.Args[i], )
-		case "-"
+		if i == 1 {
+			switch v {
+			case "add":
+				i++
+				err := AddNewHabbit(os.Args[i])
+				if err != nil {
+					log.Fatal(err)
+				}
+			case "done":
+				i++
+				err := AddRepeteationOfHabbit(os.Args[i])
+				if err != nil {
+					log.Fatal(err)
+				}
+			case "list":
+				err := PrintAllHabbitsInfo()
+				if err != nil {
+					log.Fatal(err)
+				}
+			case "info":
+				i++
+				err := PrintHabbitInfo(os.Args[i])
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
 		}
 
 	}
 }
 
 func Run() {
-	var repo *repository
-	initResources(repo)
-
+	Scan()
 }
 
 func main() {
-	for i, v := range os.Args {
-		fmt.Println(i, v)
-	}
+	Run()
 }
