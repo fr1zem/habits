@@ -7,6 +7,7 @@ type HabitsRepository interface {
 	GetHabit(ID int64) (entities.Habit, error)
 	GetHabits() ([]entities.Habit, error)
 	MarkHabitDone(ID int64) error
+	DeleteHabit(ID int64) error
 }
 
 type HabitsService struct {
@@ -34,4 +35,8 @@ func (s *HabitsService) GetHabits() ([]entities.Habit, error) {
 
 func (s *HabitsService) MarkHabitDone(ID int64) error {
 	return s.repo.MarkHabitDone(ID)
+}
+
+func (s *HabitsService) DeleteHabit(ID int64) error {
+	return s.repo.DeleteHabit(ID)
 }

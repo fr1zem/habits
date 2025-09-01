@@ -69,6 +69,27 @@ func (h *Handler) Run() {
 		fmt.Printf("Название: %s\n", habit.Name)
 		fmt.Printf("Количество повторений: %d\n", habit.Repetitions)
 		fmt.Printf("Последнее повторение: %s\n\n", habit.LastRepetition)
+	case command.isDelete():
+		id, err := strconv.Atoi(os.Args[2])
+		if err != nil {
+			log.Fatal(fmt.Errorf("strconv id: [%w]", err))
+		}
+
+		habit, err := h.service.GetHabit(int64(id))
+		if err != nil {
+			log.Fatal(fmt.Errorf("get habit in delete: [%w]", err))
+		}
+
+		err = h.service.DeleteHabit(int64(id))
+		if err != nil {
+			log.Fatal(fmt.Errorf("delete habit: [%w]", err))
+		}
+		fmt.Printf("Привычка снизу была удалена!\n")
+		fmt.Printf("Идентификатор: %d\n", habit.HabitID)
+		fmt.Printf("Название: %s\n", habit.Name)
+		fmt.Printf("Количество повторений: %d\n", habit.Repetitions)
+		fmt.Printf("Последнее повторение: %s\n\n", habit.LastRepetition)
+
 	default:
 		fmt.Println("Неизвестная команда")
 	}

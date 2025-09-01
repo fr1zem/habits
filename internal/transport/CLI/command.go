@@ -35,3 +35,10 @@ func (c *Command) isDone() bool {
 	}
 	return true
 }
+
+func (c *Command) isDelete() bool {
+	if len(c.args) != 3 || c.args[1] != "delete" || c.args[2] == "" {
+		return false
+	}
+	return true
+}

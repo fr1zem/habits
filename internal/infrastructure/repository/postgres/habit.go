@@ -62,3 +62,8 @@ func (r *HabitsRepo) MarkHabitDone(id int64) error {
                   repetitions=$2 WHERE habit_id=$3`, habit.LastRepetition, habit.Repetitions, id)
 	return err
 }
+
+func (r *HabitsRepo) DeleteHabit(ID int64) error {
+	_, err := r.db.Exec("DELETE FROM habits WHERE habit_id=$1", ID)
+	return err
+}
