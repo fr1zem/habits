@@ -13,11 +13,11 @@ func NewHabitsRepo(db *sql.DB) *HabitsRepo {
 	return &HabitsRepo{db: db}
 }
 
-func (r *HabitsRepo) CreateHabit(h entities.Habit) (int64, error) {
+func (r *HabitsRepo) CreateHabit(h *entities.Habit) (int64, error) {
 	var id int64
 	err := r.db.QueryRow(
-		`INSERT INTO habits (name, done) VALUES ($1, $2) RETURNING id`,
-		h.Name, h.Done,
+		`INSERT INTO habits (name, count, last_repetetion) VALUES ($1, $2, $3) RETURNING habit_id`,
+		h.Name, h.Repetitions, h.LastRepetition,
 	).Scan(&id)
 	return id, err
 }
@@ -25,13 +25,13 @@ func (r *HabitsRepo) CreateHabit(h entities.Habit) (int64, error) {
 func (r *HabitsRepo) GetHabit(id int64) (entities.Habit, error) {
 	var h entities.Habit
 	err := r.db.QueryRow(
-		`SELECT id, name, done FROM habits WHERE id=$1`, id,
-	).Scan(&h.ID, &h.Name, &h.Done)
+		`SELECT habit_id, name, repetitions FROM habits WHERE id=$1`, id,
+	).Scan(&h.HabitID, &h.Name, &h.Repetitions)
 	return h, err
 }
 
 func (r *HabitsRepo) GetHabits() ([]entities.Habit, error) {
-	rows, err := r.db.Query(`SELECT id, name, done FROM habits`)
+	rows, err := r.db.Query(`SELECT * FROM habits`)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func (r *HabitsRepo) GetHabits() ([]entities.Habit, error) {
 	var habits []entities.Habit
 	for rows.Next() {
 		var h entities.Habit
-		if err := rows.Scan(&h.ID, &h.Name, &h.Done); err != nil {
+		if err = rows.Scan(&h.HabitID, &h.Name, &h.Repetitions, &h.LastRepetition); err != nil {
 			return nil, err
 		}
 		habits = append(habits, h)
@@ -49,6 +49,7 @@ func (r *HabitsRepo) GetHabits() ([]entities.Habit, error) {
 }
 
 func (r *HabitsRepo) MarkHabitDone(id int64) error {
-	_, err := r.db.Exec(`UPDATE habits SET done = true WHERE id=$1`, id)
+	_, err := r.db.Exec(`UPDATE habits SET last_repetition=now(),
+                  repetitions=repetitions+1 WHERE id=$1`, id)
 	return err
 }

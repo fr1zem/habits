@@ -3,13 +3,13 @@ package entities
 import "time"
 
 type Habit struct {
-	Habit_ID       int64
+	HabitID        int64
 	Name           string
-	Count          int64
+	Repetitions    int64
 	LastRepetition time.Time
 }
 
-func (h *Habit) MarkDone(now time.Time) {
-	h.Count++
+/*func (h *Habit) MarkDone(now time.Time) {
+	h.Repetitions++
 	h.LastRepetition = now
-}
+}*/
