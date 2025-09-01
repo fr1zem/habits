@@ -3,6 +3,8 @@ package postgres
 import (
 	"CLIappHabits/internal/entities"
 	"database/sql"
+	"fmt"
+	"log"
 )
 
 type HabitsRepo struct {
@@ -16,7 +18,7 @@ func NewHabitsRepo(db *sql.DB) *HabitsRepo {
 func (r *HabitsRepo) CreateHabit(h *entities.Habit) (int64, error) {
 	var id int64
 	err := r.db.QueryRow(
-		`INSERT INTO habits (name, count, last_repetetion) VALUES ($1, $2, $3) RETURNING habit_id`,
+		`INSERT INTO habits (name, repetitions, last_repetition) VALUES ($1, $2, $3) RETURNING habit_id`,
 		h.Name, h.Repetitions, h.LastRepetition,
 	).Scan(&id)
 	return id, err
@@ -25,8 +27,8 @@ func (r *HabitsRepo) CreateHabit(h *entities.Habit) (int64, error) {
 func (r *HabitsRepo) GetHabit(id int64) (entities.Habit, error) {
 	var h entities.Habit
 	err := r.db.QueryRow(
-		`SELECT habit_id, name, repetitions FROM habits WHERE id=$1`, id,
-	).Scan(&h.HabitID, &h.Name, &h.Repetitions)
+		`SELECT * FROM habits WHERE habit_id=$1`, id,
+	).Scan(&h.HabitID, &h.Name, &h.Repetitions, &h.LastRepetition)
 	return h, err
 }
 
@@ -49,7 +51,14 @@ func (r *HabitsRepo) GetHabits() ([]entities.Habit, error) {
 }
 
 func (r *HabitsRepo) MarkHabitDone(id int64) error {
-	_, err := r.db.Exec(`UPDATE habits SET last_repetition=now(),
-                  repetitions=repetitions+1 WHERE id=$1`, id)
+
+	habit, err := r.GetHabit(id)
+	if err != nil {
+		log.Fatal(fmt.Errorf("get habit inside done: [%w]", err))
+	}
+	habit.MarkDone()
+
+	_, err = r.db.Exec(`UPDATE habits SET last_repetition=$1,
+                  repetitions=$2 WHERE habit_id=$3`, habit.LastRepetition, habit.Repetitions, id)
 	return err
 }

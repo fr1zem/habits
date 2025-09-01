@@ -9,7 +9,7 @@ type Habit struct {
 	LastRepetition time.Time
 }
 
-/*func (h *Habit) MarkDone(now time.Time) {
+func (h *Habit) MarkDone() {
 	h.Repetitions++
-	h.LastRepetition = now
-}*/
+	h.LastRepetition = time.Now()
+}

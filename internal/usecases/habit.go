@@ -18,7 +18,9 @@ func NewHabitsService(r HabitsRepository) *HabitsService {
 }
 
 func (s *HabitsService) CreateHabit(name string) (int64, error) {
-	habit := &entities.Habit{}
+	habit := &entities.Habit{
+		Name: name,
+	}
 	return s.repo.CreateHabit(habit)
 }
 
@@ -31,5 +33,5 @@ func (s *HabitsService) GetHabits() ([]entities.Habit, error) {
 }
 
 func (s *HabitsService) MarkHabitDone(ID int64) error {
-	return s.MarkHabitDone(ID)
+	return s.repo.MarkHabitDone(ID)
 }

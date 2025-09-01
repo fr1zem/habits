@@ -9,14 +9,14 @@ func NewCommand(args []string) *Command {
 }
 
 func (c *Command) isAdd() bool {
-	if len(c.args) != 3 || c.args[2] == "" {
+	if len(c.args) != 3 || c.args[2] == "" || c.args[1] != "add" {
 		return false
 	}
 	return true
 }
 
 func (c *Command) isList() bool {
-	if len(c.args) != 3 || c.args[1] != "list" {
+	if len(c.args) != 2 || c.args[1] != "list" {
 		return false
 	}
 	return true
@@ -30,7 +30,7 @@ func (c *Command) isGetHabitByID() bool {
 }
 
 func (c *Command) isDone() bool {
-	if len(c.args) != 2 || c.args[1] != "done" {
+	if len(c.args) != 3 || c.args[1] != "done" || c.args[2] == "" {
 		return false
 	}
 	return true
