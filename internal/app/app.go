@@ -19,9 +19,9 @@ func Run() {
 
 	repo := postgres.NewHabitsRepo(db)
 
-	service := usecases.NewHabitsService(repo)
+	services := usecases.NewHabitsService(repo)
 
-	handler := CLI.NewHandler(service)
+	handler := CLI.NewHandler(services)
 
 	handler.Run()
 }
