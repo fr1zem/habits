@@ -9,10 +9,33 @@ import (
 
 type Command struct {
 	args []string
+	service Service
 }
 
-func NewCommand(args []string) *Command {
-	return &Command{args: args}
+func NewCommand(args []string, service Service) *Command {
+	return &Command{
+		args: args,
+		service: service,
+	}
+}
+
+func (c *Command) Run() {
+
+	switch {
+	case c.isAdd():
+		c.Add()
+	case c.isList():
+		c.List()
+	case c.isGetHabit():
+		c.GetHabit()
+	case c.isDone():
+		c.Done()
+	case c.isDelete():
+		c.Delete()
+	default:
+		fmt.Println("Неизвестная команда")
+	}
+
 }
 
 func (c *Command) isAdd() bool {
@@ -22,13 +45,13 @@ func (c *Command) isAdd() bool {
 	return true
 }
 
-func (c *Command) Add(h *Handler) {
-	ID, err := h.service.CreateHabit(os.Args[2])
+func (c *Command) Add() {
+	ID, err := c.service.CreateHabit(os.Args[2])
 	if err != nil {
 		log.Fatal(fmt.Errorf("create habit: [%w]", err))
 	}
 	fmt.Printf("Была записана новая привычка: %s c айди %d\n", os.Args[2], ID)
-	habit, err := h.service.GetHabit(ID)
+	habit, err := c.service.GetHabit(ID)
 	if err != nil {
 		log.Fatal(fmt.Errorf("get habit in create process: [%w]", err))
 	}
@@ -46,8 +69,8 @@ func (c *Command) isList() bool {
 	return true
 }
 
-func (c *Command) List(h *Handler) {
-	hs, err := h.service.GetHabits()
+func (c *Command) List() {
+	hs, err := c.service.GetHabits()
 	if err != nil {
 		log.Fatal(fmt.Errorf("get habbits: [%w]", err))
 	}
@@ -66,12 +89,12 @@ func (c *Command) isGetHabit() bool {
 	return true
 }
 
-func (c *Command) GetHabit(h *Handler) {
+func (c *Command) GetHabit() {
 	id, err := strconv.Atoi(os.Args[2])
 	if err != nil {
 		log.Fatal(fmt.Errorf("strconv id: [%w]", err))
 	}
-	habit, err := h.service.GetHabit(int64(id))
+	habit, err := c.service.GetHabit(int64(id))
 	if err != nil {
 		log.Fatal(fmt.Errorf("get habit in self-process: [%w]", err))
 	}
@@ -88,12 +111,12 @@ func (c *Command) isDone() bool {
 	return true
 }
 
-func (c *Command) Done(h *Handler) {
+func (c *Command) Done() {
 	id, err := strconv.Atoi(os.Args[2])
 	if err != nil {
 		log.Fatal(fmt.Errorf("strconv id: [%w]", err))
 	}
-	err = h.service.MarkHabitDone(int64(id))
+	err = c.service.MarkHabitDone(int64(id))
 	if err != nil {
 		log.Fatal(fmt.Errorf("habit done: [%w]", err))
 	}
@@ -106,18 +129,18 @@ func (c *Command) isDelete() bool {
 	return true
 }
 
-func (c *Command) Delete(h *Handler) {
+func (c *Command) Delete() {
 	id, err := strconv.Atoi(os.Args[2])
 	if err != nil {
 		log.Fatal(fmt.Errorf("strconv id: [%w]", err))
 	}
 
-	habit, err := h.service.GetHabit(int64(id))
+	habit, err := c.service.GetHabit(int64(id))
 	if err != nil {
 		log.Fatal(fmt.Errorf("get habit in delete: [%w]", err))
 	}
 
-	err = h.service.DeleteHabit(int64(id))
+	err = c.service.DeleteHabit(int64(id))
 	if err != nil {
 		log.Fatal(fmt.Errorf("delete habit: [%w]", err))
 	}
@@ -136,5 +159,5 @@ func (c *Command) isHelp() bool {
 }
 
 func (c *Command) Help() {
-	
+
 }

@@ -4,22 +4,30 @@ import (
 	"CLIappHabits/internal/infrastructure/repository/postgres"
 	"CLIappHabits/internal/transport/CLI"
 	"CLIappHabits/internal/usecases"
-	"database/sql"
+	"CLIappHabits/pkg/Postgres"
 	_ "github.com/lib/pq"
 	"log"
 )
 
 func Run() {
 
-	db, err := sql.Open("postgres", "host=172.24.96.1 port=5432 user=postgres "+
-		"password=postgres dbname=habits sslmode=disable")
+	db, err := Postgres.NewPostgres(
+		Postgres.Client{
+			Host:     "172.24.96.1",
+			Port:     "5432",
+			User:     "postgres",
+			Password: "postgres",
+			DBName:   "habits",
+			SSLMode:  "disable",
+		})
 	if err != nil {
 		log.Fatal("sql open: [%w]", err)
 	}
-
+	/*Это типа конструктор NewXXX(), но такой конструктор должен принимать интерфейс, а он принимает *sql.DB
+	Получается это будет не конструктор с инъекцией, а конструктор БД исходя из конфига*/
 	repo := postgres.NewHabitsRepo(db)
 
-	services := usecases.NewHabitsService(repo)
+	services := usecases.NewHabitsService(repo) //Вот это уже правильный конструктор
 
 	handler := CLI.NewHandler(services)
 

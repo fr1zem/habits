@@ -4,7 +4,6 @@ import (
 	"CLIappHabits/internal/entities"
 	"database/sql"
 	"fmt"
-	"log"
 )
 
 type HabitsRepo struct {
@@ -52,14 +51,17 @@ func (r *HabitsRepo) GetHabits() ([]entities.Habit, error) {
 
 func (r *HabitsRepo) MarkHabitDone(id int64) error {
 
-	habit, err := r.GetHabit(id)
+	var h entities.Habit
+	err := r.db.QueryRow(
+		`SELECT * FROM habits WHERE habit_id=$1`, id,
+	).Scan(&h.HabitID, &h.Name, &h.Repetitions, &h.LastRepetition)
 	if err != nil {
-		log.Fatal(fmt.Errorf("get habit inside done: [%w]", err))
+		return fmt.Errorf("get habit inside done: [%w]", err)
 	}
-	habit.MarkDone()
+	h.MarkDone()
 
 	_, err = r.db.Exec(`UPDATE habits SET last_repetition=$1,
-                  repetitions=$2 WHERE habit_id=$3`, habit.LastRepetition, habit.Repetitions, id)
+                  repetitions=$2 WHERE habit_id=$3`, h.LastRepetition, h.Repetitions, id)
 	return err
 }
 

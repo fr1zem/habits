@@ -1,35 +1,37 @@
 package CLI
 
 import (
-	"CLIappHabits/internal/usecases"
-	"fmt"
+	"CLIappHabits/internal/entities"
 	"os"
 )
 
-type Handler struct {
-	service *usecases.HabitsService
+/*
+Нужно сделать интерфейс UseCase(Service), который и работать здесь уже с этим интерфейсом
+Возможно ещё, что контроллер должен быть не handler, а command и presenter добавить.
+Только сувать его сюда же или нет?
+*/
+
+type Service interface {
+	CreateHabit(name string) (int64, error)
+	GetHabit(ID int64) (entities.Habit, error)
+	GetHabits() ([]entities.Habit, error)
+	MarkHabitDone(ID int64) error
+	DeleteHabit(ID int64) error
 }
 
-func NewHandler(service *usecases.HabitsService) *Handler {
+type Handler struct {
+	service Service
+}
+
+/*Так же нужно сделать конструктор, который бы принимал интерфейс, а возвращал хэндлер*/
+func NewHandler(service Service) *Handler {
 	return &Handler{service: service}
 }
 
 func (h *Handler) Run() {
 
-	command := NewCommand(os.Args)
+	command := NewCommand(os.Args, h.service)
 
-	switch {
-	case command.isAdd():
-		command.Add(h)
-	case command.isList():
-		command.List(h)
-	case command.isGetHabit():
-		command.GetHabit(h)
-	case command.isDone():
-		command.Done(h)
-	case command.isDelete():
-		command.Delete(h)
-	default:
-		fmt.Println("Неизвестная команда")
-	}
+	command.Run()
+
 }
