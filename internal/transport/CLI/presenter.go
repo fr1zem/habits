@@ -2,6 +2,7 @@ package CLI
 
 import (
 	"CLIappHabits/internal/entities"
+	"errors"
 	"fmt"
 )
 
@@ -10,6 +11,18 @@ type Presenter struct {
 
 func (p *Presenter) FormatError(err error) {
 	fmt.Println("Произошла ошибка!")
+	switch {
+	case errors.Is(err, entities.ErrHabitNotExists):
+		fmt.Println("Данной привычки не существует")
+	case errors.Is(err, entities.ErrHabitsNotExists):
+		fmt.Println("Привычек ещё не создано")
+	case errors.Is(err, entities.ErrHabitAlreadyExists):
+		fmt.Println("Данная привычка уже существует")
+	case errors.Is(err, entities.ErrEmptyName):
+		fmt.Println("Имя привычки не указано")
+	default:
+		fmt.Println("Неизвестная ошибка")
+	}
 }
 
 func (p *Presenter) FormatGetHabit(habit entities.Habit) {

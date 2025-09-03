@@ -3,7 +3,9 @@ package postgres
 import (
 	"CLIappHabits/internal/entities"
 	"database/sql"
+	"errors"
 	"fmt"
+	"strings"
 )
 
 type HabitsRepo struct {
@@ -20,6 +22,9 @@ func (r *HabitsRepo) CreateHabit(h *entities.Habit) (int64, error) {
 		`INSERT INTO habits (name, repetitions, last_repetition) VALUES ($1, $2, $3) RETURNING habit_id`,
 		h.Name, h.Repetitions, h.LastRepetition,
 	).Scan(&id)
+	if strings.Contains(err.Error(), "duplicate key value") {
+		return 0, entities.ErrHabitAlreadyExists
+	}
 	return id, err
 }
 
@@ -28,12 +33,18 @@ func (r *HabitsRepo) GetHabit(id int64) (entities.Habit, error) {
 	err := r.db.QueryRow(
 		`SELECT * FROM habits WHERE habit_id=$1`, id,
 	).Scan(&h.HabitID, &h.Name, &h.Repetitions, &h.LastRepetition)
+	if errors.Is(err, sql.ErrNoRows) {
+		return h, entities.ErrHabitNotExists
+	}
 	return h, err
 }
 
 func (r *HabitsRepo) GetHabits() ([]entities.Habit, error) {
 	rows, err := r.db.Query(`SELECT * FROM habits`)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, entities.ErrHabitsNotExists
+		}
 		return nil, err
 	}
 	defer rows.Close()
@@ -56,6 +67,9 @@ func (r *HabitsRepo) MarkHabitDone(id int64) error {
 		`SELECT * FROM habits WHERE habit_id=$1`, id,
 	).Scan(&h.HabitID, &h.Name, &h.Repetitions, &h.LastRepetition)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return entities.ErrHabitNotExists
+		}
 		return fmt.Errorf("get habit inside done: [%w]", err)
 	}
 	h.MarkDone()
@@ -66,6 +80,13 @@ func (r *HabitsRepo) MarkHabitDone(id int64) error {
 }
 
 func (r *HabitsRepo) DeleteHabit(ID int64) error {
-	_, err := r.db.Exec("DELETE FROM habits WHERE habit_id=$1", ID)
+	res, err := r.db.Exec("DELETE FROM habits WHERE habit_id=$1", ID)
+	rowsAff, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAff == 0 {
+		return entities.ErrHabitNotExists
+	}
 	return err
 }

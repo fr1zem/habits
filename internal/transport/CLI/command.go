@@ -128,17 +128,17 @@ func (c *Command) isDelete() bool {
 func (c *Command) Delete() {
 	id, err := strconv.Atoi(os.Args[2])
 	if err != nil {
-		log.Fatal(fmt.Errorf("strconv id: [%w]", err))
+		c.presenter.FormatError(err)
 	}
 
 	habit, err := c.service.GetHabit(int64(id))
 	if err != nil {
-		log.Fatal(fmt.Errorf("get habit in delete: [%w]", err))
+		c.presenter.FormatError(err)
 	}
 
 	err = c.service.DeleteHabit(int64(id))
 	if err != nil {
-		log.Fatal(fmt.Errorf("delete habit: [%w]", err))
+		c.presenter.FormatError(err)
 	}
 	c.presenter.FormatDelete(habit)
 }
