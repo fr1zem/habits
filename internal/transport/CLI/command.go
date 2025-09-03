@@ -2,7 +2,6 @@ package CLI
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 )
@@ -49,13 +48,15 @@ func (c *Command) isAdd() bool {
 func (c *Command) Add() {
 	ID, err := c.service.CreateHabit(os.Args[2])
 	if err != nil {
-		log.Fatal(fmt.Errorf("create habit: [%w]", err))
+		c.presenter.FormatError(err)
+		return
 	}
 	fmt.Printf("Была записана новая привычка: %s c айди %d\n", os.Args[2], ID)
 
 	habit, err := c.service.GetHabit(ID)
 	if err != nil {
-		log.Fatal(fmt.Errorf("get habit in create process: [%w]", err))
+		c.presenter.FormatError(err)
+		return
 	}
 
 	c.presenter.FormatAdd(habit)
@@ -71,7 +72,8 @@ func (c *Command) isList() bool {
 func (c *Command) List() {
 	hs, err := c.service.GetHabits()
 	if err != nil {
-		log.Fatal(fmt.Errorf("get habbits: [%w]", err))
+		c.presenter.FormatError(err)
+		return
 	}
 	c.presenter.FormatList(hs)
 }
@@ -86,11 +88,12 @@ func (c *Command) isGetHabit() bool {
 func (c *Command) GetHabit() {
 	id, err := strconv.Atoi(os.Args[2])
 	if err != nil {
-		log.Fatal(fmt.Errorf("strconv id: [%w]", err))
+		c.presenter.FormatError(err)
 	}
 	habit, err := c.service.GetHabit(int64(id))
 	if err != nil {
-		log.Fatal(fmt.Errorf("get habit in self-process: [%w]", err))
+		c.presenter.FormatError(err)
+		return
 	}
 	c.presenter.FormatGetHabit(habit)
 }
@@ -105,15 +108,18 @@ func (c *Command) isDone() bool {
 func (c *Command) Done() {
 	id, err := strconv.Atoi(os.Args[2])
 	if err != nil {
-		log.Fatal(fmt.Errorf("strconv id: [%w]", err))
+		c.presenter.FormatError(err)
+		return
 	}
 	err = c.service.MarkHabitDone(int64(id))
 	if err != nil {
-		log.Fatal(fmt.Errorf("habit done: [%w]", err))
+		c.presenter.FormatError(err)
+		return
 	}
 	h, err := c.service.GetHabit(int64(id))
 	if err != nil {
 		c.presenter.FormatError(err)
+		return
 	}
 	c.presenter.FormatDone(h)
 }
@@ -129,16 +135,19 @@ func (c *Command) Delete() {
 	id, err := strconv.Atoi(os.Args[2])
 	if err != nil {
 		c.presenter.FormatError(err)
+		return
 	}
 
 	habit, err := c.service.GetHabit(int64(id))
 	if err != nil {
 		c.presenter.FormatError(err)
+		return
 	}
 
 	err = c.service.DeleteHabit(int64(id))
 	if err != nil {
 		c.presenter.FormatError(err)
+		return
 	}
 	c.presenter.FormatDelete(habit)
 }

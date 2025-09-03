@@ -14,8 +14,6 @@ func (p *Presenter) FormatError(err error) {
 	switch {
 	case errors.Is(err, entities.ErrHabitNotExists):
 		fmt.Println("Данной привычки не существует")
-	case errors.Is(err, entities.ErrHabitsNotExists):
-		fmt.Println("Привычек ещё не создано")
 	case errors.Is(err, entities.ErrHabitAlreadyExists):
 		fmt.Println("Данная привычка уже существует")
 	case errors.Is(err, entities.ErrEmptyName):
@@ -41,6 +39,9 @@ func (p *Presenter) FormatAdd(habit entities.Habit) {
 }
 
 func (p *Presenter) FormatList(hs []entities.Habit) {
+	if len(hs) == 0 {
+		fmt.Println("В вашем списке привычек ещё нету ни одной привычки!")
+	}
 	for _, habit := range hs {
 		fmt.Printf("Идентификатор: %d\n", habit.HabitID)
 		fmt.Printf("Название: %s\n", habit.Name)

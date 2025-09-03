@@ -20,7 +20,8 @@ func NewHabitsService(r HabitsRepository) *HabitsService {
 
 func (s *HabitsService) CreateHabit(name string) (int64, error) {
 	habit := &entities.Habit{
-		Name: name,
+		Name:        name,
+		Repetitions: 0,
 	}
 	return s.repo.CreateHabit(habit)
 }

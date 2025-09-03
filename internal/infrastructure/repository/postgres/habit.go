@@ -22,8 +22,10 @@ func (r *HabitsRepo) CreateHabit(h *entities.Habit) (int64, error) {
 		`INSERT INTO habits (name, repetitions, last_repetition) VALUES ($1, $2, $3) RETURNING habit_id`,
 		h.Name, h.Repetitions, h.LastRepetition,
 	).Scan(&id)
-	if strings.Contains(err.Error(), "duplicate key value") {
-		return 0, entities.ErrHabitAlreadyExists
+	if err != nil {
+		if strings.Contains(err.Error(), "повторяющееся значение ключа") {
+			return 0, entities.ErrHabitAlreadyExists
+		}
 	}
 	return id, err
 }
@@ -42,9 +44,6 @@ func (r *HabitsRepo) GetHabit(id int64) (entities.Habit, error) {
 func (r *HabitsRepo) GetHabits() ([]entities.Habit, error) {
 	rows, err := r.db.Query(`SELECT * FROM habits`)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, entities.ErrHabitsNotExists
-		}
 		return nil, err
 	}
 	defer rows.Close()
@@ -72,8 +71,8 @@ func (r *HabitsRepo) MarkHabitDone(id int64) error {
 		}
 		return fmt.Errorf("get habit inside done: [%w]", err)
 	}
-	h.MarkDone()
 
+	h.MarkDone()
 	_, err = r.db.Exec(`UPDATE habits SET last_repetition=$1,
                   repetitions=$2 WHERE habit_id=$3`, h.LastRepetition, h.Repetitions, id)
 	return err
