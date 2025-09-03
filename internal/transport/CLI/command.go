@@ -8,13 +8,14 @@ import (
 )
 
 type Command struct {
-	args []string
-	service Service
+	args      []string
+	service   Service
+	presenter Presenter
 }
 
 func NewCommand(args []string, service Service) *Command {
 	return &Command{
-		args: args,
+		args:    args,
 		service: service,
 	}
 }
@@ -51,15 +52,13 @@ func (c *Command) Add() {
 		log.Fatal(fmt.Errorf("create habit: [%w]", err))
 	}
 	fmt.Printf("Была записана новая привычка: %s c айди %d\n", os.Args[2], ID)
+
 	habit, err := c.service.GetHabit(ID)
 	if err != nil {
 		log.Fatal(fmt.Errorf("get habit in create process: [%w]", err))
 	}
-	fmt.Printf("Нынешняя запись:\n")
-	fmt.Printf("Идентификатор: %d\n", habit.HabitID)
-	fmt.Printf("Название: %s\n", habit.Name)
-	fmt.Printf("Количество повторений: %d\n", habit.Repetitions)
-	fmt.Printf("Последнее повторение: %s\n", habit.LastRepetition)
+
+	c.presenter.FormatAdd(habit)
 }
 
 func (c *Command) isList() bool {
@@ -74,12 +73,7 @@ func (c *Command) List() {
 	if err != nil {
 		log.Fatal(fmt.Errorf("get habbits: [%w]", err))
 	}
-	for _, habit := range hs {
-		fmt.Printf("Идентификатор: %d\n", habit.HabitID)
-		fmt.Printf("Название: %s\n", habit.Name)
-		fmt.Printf("Количество повторений: %d\n", habit.Repetitions)
-		fmt.Printf("Последнее повторение: %s\n\n", habit.LastRepetition)
-	}
+	c.presenter.FormatList(hs)
 }
 
 func (c *Command) isGetHabit() bool {
@@ -98,10 +92,7 @@ func (c *Command) GetHabit() {
 	if err != nil {
 		log.Fatal(fmt.Errorf("get habit in self-process: [%w]", err))
 	}
-	fmt.Printf("Идентификатор: %d\n", habit.HabitID)
-	fmt.Printf("Название: %s\n", habit.Name)
-	fmt.Printf("Количество повторений: %d\n", habit.Repetitions)
-	fmt.Printf("Последнее повторение: %s\n\n", habit.LastRepetition)
+	c.presenter.FormatGetHabit(habit)
 }
 
 func (c *Command) isDone() bool {
@@ -120,6 +111,11 @@ func (c *Command) Done() {
 	if err != nil {
 		log.Fatal(fmt.Errorf("habit done: [%w]", err))
 	}
+	h, err := c.service.GetHabit(int64(id))
+	if err != nil {
+		c.presenter.FormatError(err)
+	}
+	c.presenter.FormatDone(h)
 }
 
 func (c *Command) isDelete() bool {
@@ -144,11 +140,7 @@ func (c *Command) Delete() {
 	if err != nil {
 		log.Fatal(fmt.Errorf("delete habit: [%w]", err))
 	}
-	fmt.Printf("Привычка снизу была удалена!\n")
-	fmt.Printf("Идентификатор: %d\n", habit.HabitID)
-	fmt.Printf("Название: %s\n", habit.Name)
-	fmt.Printf("Количество повторений: %d\n", habit.Repetitions)
-	fmt.Printf("Последнее повторение: %s\n\n", habit.LastRepetition)
+	c.presenter.FormatDelete(habit)
 }
 
 func (c *Command) isHelp() bool {
