@@ -4,9 +4,11 @@ import (
 	"CLIappHabits/internal/infrastructure/repository/postgres"
 	"CLIappHabits/internal/transport/CLI"
 	"CLIappHabits/internal/usecases"
+	"CLIappHabits/pkg/CLIRouter"
 	"CLIappHabits/pkg/Postgres"
 	_ "github.com/lib/pq"
 	"log"
+	"os"
 )
 
 func Run() {
@@ -29,7 +31,11 @@ func Run() {
 
 	services := usecases.NewHabitsService(repo) //Вот это уже правильный конструктор
 
-	handler := CLI.NewHandler(services)
+	router := CLIRouter.NewRouter(os.Args)
+
+	handler := CLI.NewHandler(services, router)
+
+	handler.Init()
 
 	handler.Run()
 }

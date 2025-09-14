@@ -31,6 +31,7 @@ func (p *Presenter) FormatGetHabit(habit entities.Habit) {
 }
 
 func (p *Presenter) FormatAdd(habit entities.Habit) {
+	fmt.Println("Была добавлена новая привычка!")
 	fmt.Printf("Нынешняя запись:\n")
 	fmt.Printf("Идентификатор: %d\n", habit.HabitID)
 	fmt.Printf("Название: %s\n", habit.Name)
