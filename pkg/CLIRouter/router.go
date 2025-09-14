@@ -3,7 +3,6 @@ package CLIRouter
 import (
 	"fmt"
 	"log"
-	"os"
 	"strings"
 	"sync"
 )
@@ -47,32 +46,28 @@ func (r *Router) Register(pattern string, handlerFunc func(args []string), usage
 
 func (r *Router) Run() {
 
-	var isHandle = false
+	cmd := r.args[1]
+	args := r.args[2:]
+
+	if h, ok := r.commands[cmd]; ok {
+		h.handler(args)
+	} else {
+		fmt.Print(r.available())
+	}
+
+}
+
+func (r *Router) available() string {
+	firstMSG := fmt.Sprintf("Правильное использование данного приложения:\n")
+	MSGs := make([]string, len(r.commands)+1)
+	MSGs = append(MSGs, firstMSG)
+	var msg string
 
 	for c, h := range r.commands {
-		if c == r.args[0] {
-			isHandle = true
-			h.handler(r.args[1:])
-		}
+		msg = fmt.Sprintf("\t%s: %s\n", c, h.usage)
+		MSGs = append(MSGs, msg)
 	}
 
-	if !isHandle {
-		firstMSG := fmt.Sprintf("Правильное использование данного приложения:\n")
-		MSGs := make([]string, len(r.commands)+1)
-		MSGs = append(MSGs, firstMSG)
-		var msg string
-
-		for c, h := range r.commands {
-			msg = fmt.Sprintf("\t%s: %s\n", c, h.usage)
-			MSGs = append(MSGs, msg)
-		}
-
-		helpMSG := strings.Join(MSGs, "")
-
-		_, err := fmt.Fprintf(os.Stderr, helpMSG)
-		if err != nil {
-			log.Fatal("Ошибка в выводе в os.Stderr")
-		}
-	}
-
+	helpMSG := strings.Join(MSGs, "")
+	return helpMSG
 }
