@@ -5,37 +5,50 @@ import (
 	"CLIappHabits/internal/transport/CLI"
 	"CLIappHabits/internal/usecases"
 	"CLIappHabits/pkg/CLIRouter"
-	"CLIappHabits/pkg/Postgres"
+	"database/sql"
 	_ "github.com/lib/pq"
 	"log"
 	"os"
 )
 
 func Run() {
-
-	db, err := Postgres.NewPostgres(
-		Postgres.Client{
-			Host:     "172.24.96.1",
-			Port:     "5432",
-			User:     "postgres",
-			Password: "postgres",
-			DBName:   "habits",
-			SSLMode:  "disable",
-		})
+	connStr := "host=172.24.96.1 port=5432 user=postgres password=postgres dbname=habits sslmode=disable"
+	db, err := sql.Open("postgres", connStr)
 	if err != nil {
-		log.Fatal("sql open: [%w]", err)
+		log.Fatalf("sql open: %v", err)
 	}
-	/*Это типа конструктор NewXXX(), но такой конструктор должен принимать интерфейс, а он принимает *sql.DB
-	Получается это будет не конструктор с инъекцией, а конструктор БД исходя из конфига*/
+
+	if err = db.Ping(); err != nil {
+		log.Fatalf("db ping: %v", err)
+	}
+
+	// 1. Репозиторий
 	repo := postgres.NewHabitsRepo(db)
 
-	services := usecases.NewHabitsService(repo) //Вот это уже правильный конструктор
+	// 2. Юзкейсы (каждый получает repo)
+	creator := usecases.NewCreateHabitUseCase(repo)
+	getter := usecases.NewGetHabitUseCase(repo)
+	lister := usecases.NewListHabitsUseCase(repo)
+	marker := usecases.NewMarkHabitUseCase(repo)
+	deleter := usecases.NewDeleteHabitUseCase(repo)
 
+	// 3. Презентер
+	presenter := CLI.NewCLIPresenter()
+
+	// 4. Роутер
 	router := CLIRouter.NewRouter(os.Args)
 
-	handler := CLI.NewHandler(services, router)
+	// 5. Хендлер
+	handler := CLI.NewHabitHandler(
+		router,
+		creator,
+		getter,
+		lister,
+		marker,
+		deleter,
+		presenter,
+	)
 
 	handler.Init()
-
 	handler.Run()
 }

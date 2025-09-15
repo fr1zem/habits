@@ -2,14 +2,19 @@ package CLI
 
 import (
 	"CLIappHabits/internal/entities"
+	"CLIappHabits/internal/usecases"
 	"errors"
 	"fmt"
 )
 
-type Presenter struct {
+type CLIPresenter struct {
 }
 
-func (p *Presenter) FormatError(err error) {
+func NewCLIPresenter() *CLIPresenter {
+	return &CLIPresenter{}
+}
+
+func (p *CLIPresenter) FormatError(err error) {
 	fmt.Println("Произошла ошибка!")
 	switch {
 	case errors.Is(err, entities.ErrHabitNotExists):
@@ -23,46 +28,48 @@ func (p *Presenter) FormatError(err error) {
 	}
 }
 
-func (p *Presenter) FormatGetHabit(habit entities.Habit) {
-	fmt.Printf("Идентификатор: %d\n", habit.HabitID)
-	fmt.Printf("Название: %s\n", habit.Name)
-	fmt.Printf("Количество повторений: %d\n", habit.Repetitions)
-	fmt.Printf("Последнее повторение: %s\n\n", habit.LastRepetition)
-}
-
-func (p *Presenter) FormatAdd(habit entities.Habit) {
+func (p *CLIPresenter) FormatAdd(output usecases.GetHabitOutputDTO) {
 	fmt.Println("Была добавлена новая привычка!")
 	fmt.Printf("Нынешняя запись:\n")
-	fmt.Printf("Идентификатор: %d\n", habit.HabitID)
-	fmt.Printf("Название: %s\n", habit.Name)
-	fmt.Printf("Количество повторений: %d\n", habit.Repetitions)
-	fmt.Printf("Последнее повторение: %s\n", habit.LastRepetition)
+	fmt.Printf("Идентификатор: %d\n", output.HabitID)
+	fmt.Printf("Название: %s\n", output.Name)
+	fmt.Printf("Количество повторений: %d\n", output.Repetitions)
+	fmt.Printf("Последнее повторение: ещё не было выполнено ни одного раза")
 }
 
-func (p *Presenter) FormatList(hs []entities.Habit) {
-	if len(hs) == 0 {
+func (p *CLIPresenter) FormatGetHabit(output usecases.GetHabitOutputDTO) {
+	fmt.Printf("Идентификатор: %d\n", output.HabitID)
+	fmt.Printf("Название: %s\n", output.Name)
+	fmt.Printf("Количество повторений: %d\n", output.Repetitions)
+	fmt.Printf("Последнее повторение: %s\n\n", output.LastRepetition)
+}
+
+func (p *CLIPresenter) FormatList(output usecases.ListHabitsOutputDTO) {
+	if len(output.Habits) == 0 {
 		fmt.Println("В вашем списке привычек ещё нету ни одной привычки!")
 	}
-	for _, habit := range hs {
+	for _, habit := range output.Habits {
 		fmt.Printf("Идентификатор: %d\n", habit.HabitID)
 		fmt.Printf("Название: %s\n", habit.Name)
 		fmt.Printf("Количество повторений: %d\n", habit.Repetitions)
-		fmt.Printf("Последнее повторение: %s\n\n", habit.LastRepetition)
+		if habit.Repetitions != 0 {
+			fmt.Printf("Последнее повторение: %s\n\n", habit.LastRepetition)
+		}
 	}
 }
 
-func (p *Presenter) FormatDone(h entities.Habit) {
-	fmt.Printf("Привычка %s была выполнена!\n", h.Name)
-	fmt.Printf("Идентификатор: %d\n", h.HabitID)
-	fmt.Printf("Название: %s\n", h.Name)
-	fmt.Printf("Количество повторений: %d\n", h.Repetitions)
-	fmt.Printf("Последнее повторение: %s\n\n", h.LastRepetition)
+func (p *CLIPresenter) FormatCompleted(output usecases.GetHabitOutputDTO) {
+	fmt.Printf("Привычка %s была выполнена!\n", output.Name)
+	fmt.Printf("Идентификатор: %d\n", output.HabitID)
+	fmt.Printf("Название: %s\n", output.Name)
+	fmt.Printf("Количество повторений: %d\n", output.Repetitions)
+	fmt.Printf("Последнее повторение: %s\n\n", output.LastRepetition)
 }
 
-func (p *Presenter) FormatDelete(h entities.Habit) {
+func (p *CLIPresenter) FormatDelete(output usecases.GetHabitOutputDTO) {
 	fmt.Printf("Привычка была удалена!\n")
-	fmt.Printf("Идентификатор: %d\n", h.HabitID)
-	fmt.Printf("Название: %s\n", h.Name)
-	fmt.Printf("Количество повторений: %d\n", h.Repetitions)
-	fmt.Printf("Последнее повторение: %s\n\n", h.LastRepetition)
+	fmt.Printf("Идентификатор: %d\n", output.HabitID)
+	fmt.Printf("Название: %s\n", output.Name)
+	fmt.Printf("Количество повторений: %d\n", output.Repetitions)
+	fmt.Printf("Последнее повторение: %s\n\n", output.LastRepetition)
 }
