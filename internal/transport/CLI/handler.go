@@ -2,15 +2,8 @@ package CLI
 
 import (
 	"CLIappHabits/internal/entities"
-	"os"
 	"strconv"
 )
-
-/*
-Нужно сделать интерфейс UseCase(Service), который и работать здесь уже с этим интерфейсом
-Возможно ещё, что контроллер должен быть не handler, а command и presenter добавить.
-Только сувать его сюда же или нет?
-*/
 
 type Service interface {
 	CreateHabit(name string) (int64, error)
@@ -21,8 +14,8 @@ type Service interface {
 }
 
 type Router interface {
-	Register(pattern string, f func(arg string), usage string)
-	Serve()
+	Register(pattern string, f func(args []string), usage string)
+	Run()
 }
 
 type Handler struct {
@@ -49,11 +42,11 @@ func (h *Handler) Init() {
 }
 
 func (h *Handler) Run() {
-	h.router.Serve()
+	h.router.Run()
 }
 
-func (h *Handler) Add(arg string) {
-	ID, err := h.service.CreateHabit(arg)
+func (h *Handler) Add(arg []string) {
+	ID, err := h.service.CreateHabit(arg[0])
 	if err != nil {
 		h.presenter.FormatError(err)
 		return
@@ -68,7 +61,7 @@ func (h *Handler) Add(arg string) {
 	h.presenter.FormatAdd(habit)
 }
 
-func (h *Handler) List(arg string) {
+func (h *Handler) List(args []string) {
 	hs, err := h.service.GetHabits()
 	if err != nil {
 		h.presenter.FormatError(err)
@@ -77,8 +70,8 @@ func (h *Handler) List(arg string) {
 	h.presenter.FormatList(hs)
 }
 
-func (h *Handler) GetHabit(arg string) {
-	id, err := strconv.Atoi(arg)
+func (h *Handler) GetHabit(args []string) {
+	id, err := strconv.Atoi(args[0])
 	if err != nil {
 		h.presenter.FormatError(err)
 	}
@@ -90,8 +83,8 @@ func (h *Handler) GetHabit(arg string) {
 	h.presenter.FormatGetHabit(habit)
 }
 
-func (h *Handler) Done(arg string) {
-	id, err := strconv.Atoi(os.Args[2])
+func (h *Handler) Done(args []string) {
+	id, err := strconv.Atoi(args[0])
 	if err != nil {
 		h.presenter.FormatError(err)
 		return
@@ -109,8 +102,8 @@ func (h *Handler) Done(arg string) {
 	h.presenter.FormatDone(habit)
 }
 
-func (h *Handler) Delete(arg string) {
-	id, err := strconv.Atoi(arg)
+func (h *Handler) Delete(args []string) {
+	id, err := strconv.Atoi(args[0])
 	if err != nil {
 		h.presenter.FormatError(err)
 		return

@@ -41,7 +41,7 @@ func (r *HabitsRepo) GetHabit(id int64) (entities.Habit, error) {
 	return h, err
 }
 
-func (r *HabitsRepo) GetHabits() ([]entities.Habit, error) {
+func (r *HabitsRepo) ListHabits() ([]entities.Habit, error) {
 	rows, err := r.db.Query(`SELECT * FROM habits`)
 	if err != nil {
 		return nil, err
