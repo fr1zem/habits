@@ -41,7 +41,9 @@ func (p *CLIPresenter) FormatGetHabit(output usecases.GetHabitOutputDTO) {
 	fmt.Printf("Идентификатор: %d\n", output.HabitID)
 	fmt.Printf("Название: %s\n", output.Name)
 	fmt.Printf("Количество повторений: %d\n", output.Repetitions)
-	fmt.Printf("Последнее повторение: %s\n\n", output.LastRepetition)
+	if output.Repetitions != 0 {
+		fmt.Printf("Последнее повторение: %s\n\n", output.LastRepetition)
+	}
 }
 
 func (p *CLIPresenter) FormatList(output usecases.ListHabitsOutputDTO) {
