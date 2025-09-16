@@ -62,8 +62,8 @@ func toHabitResponse(dto usecases.GetHabitOutputDTO) HabitResponse {
 	return HabitResponse{
 		HabitID:        dto.HabitID,
 		Name:           dto.Name,
-		Repetitions:    0,
-		LastRepetition: time.Time{},
+		Repetitions:    dto.Repetitions,
+		LastRepetition: dto.LastRepetition,
 	}
 }
 

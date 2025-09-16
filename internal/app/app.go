@@ -7,12 +7,13 @@ import (
 	"CLIappHabits/internal/usecases"
 	"CLIappHabits/pkg/CLIRouter"
 	"database/sql"
+	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 	"log"
 	"os"
 )
 
-func Run() {
+func RunCLI() {
 	connStr := "host=172.24.96.1 port=5432 user=postgres password=postgres dbname=habits sslmode=disable"
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
@@ -75,6 +76,15 @@ func RunWebGin() {
 	marker := usecases.NewMarkHabitUseCase(repo)
 	deleter := usecases.NewDeleteHabitUseCase(repo)
 
+	r := gin.Default()
+
 	handler := httpGin.NewHabitHandler(creator, getter, lister, marker, deleter)
+
+	handler.InitRoutes(r)
+
+	err = r.Run("localhost:18080")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 }
