@@ -1,0 +1,8 @@
+postgres:
+  host: 172.24.96.1
+  port: 5432
+  SSLMode: disable
+
+server:
+  host: localhost
+  port: 18080

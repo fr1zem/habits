@@ -24,7 +24,7 @@ func (p *CLIPresenter) FormatError(err error) {
 	case errors.Is(err, entities.ErrEmptyName):
 		fmt.Println("Имя привычки не указано")
 	default:
-		fmt.Println("Неизвестная ошибка")
+		fmt.Println(err.Error())
 	}
 }
 
@@ -40,10 +40,14 @@ func (p *CLIPresenter) FormatAdd(output usecases.GetHabitOutputDTO) {
 func (p *CLIPresenter) FormatGetHabit(output usecases.GetHabitOutputDTO) {
 	fmt.Printf("Идентификатор: %d\n", output.HabitID)
 	fmt.Printf("Название: %s\n", output.Name)
-	fmt.Printf("Количество повторений: %d\n", output.Repetitions)
-	if output.Repetitions != 0 {
-		fmt.Printf("Последнее повторение: %s\n\n", output.LastRepetition)
+	if output.Repetitions == 0 {
+		fmt.Printf("Количество повторений: %d\n", output.Repetitions)
 	}
+	if output.Repetitions != 0 {
+		fmt.Printf("Количество повторений: %d\n", output.Repetitions)
+		fmt.Printf("Последнее повторение: %s\n", output.LastRepetition)
+	}
+	fmt.Println("")
 }
 
 func (p *CLIPresenter) FormatList(output usecases.ListHabitsOutputDTO) {
@@ -55,8 +59,9 @@ func (p *CLIPresenter) FormatList(output usecases.ListHabitsOutputDTO) {
 		fmt.Printf("Название: %s\n", habit.Name)
 		fmt.Printf("Количество повторений: %d\n", habit.Repetitions)
 		if habit.Repetitions != 0 {
-			fmt.Printf("Последнее повторение: %s\n\n", habit.LastRepetition)
+			fmt.Printf("Последнее повторение: %s\n", habit.LastRepetition)
 		}
+		fmt.Println("")
 	}
 }
 
@@ -73,5 +78,8 @@ func (p *CLIPresenter) FormatDelete(output usecases.GetHabitOutputDTO) {
 	fmt.Printf("Идентификатор: %d\n", output.HabitID)
 	fmt.Printf("Название: %s\n", output.Name)
 	fmt.Printf("Количество повторений: %d\n", output.Repetitions)
-	fmt.Printf("Последнее повторение: %s\n\n", output.LastRepetition)
+	if output.Repetitions != 0 {
+		fmt.Printf("Последнее повторение: %s\n", output.LastRepetition)
+	}
+	fmt.Println()
 }

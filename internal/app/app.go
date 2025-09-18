@@ -1,12 +1,14 @@
 package app
 
 import (
+	"CLIappHabits/internal/config"
 	"CLIappHabits/internal/infrastructure/repository/postgres"
 	"CLIappHabits/internal/transport/CLI"
 	"CLIappHabits/internal/transport/Web/v1/httpGin"
 	"CLIappHabits/internal/usecases"
 	"CLIappHabits/pkg/CLIRouter"
-	"database/sql"
+	"CLIappHabits/pkg/Postgres"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 	"log"
@@ -14,10 +16,18 @@ import (
 )
 
 func RunCLI() {
-	connStr := "host=172.24.96.1 port=5432 user=postgres password=postgres dbname=habits sslmode=disable"
-	db, err := sql.Open("postgres", connStr)
+
+	cfg, err := config.Init()
 	if err != nil {
-		log.Fatalf("sql open: %v", err)
+		log.Fatal(err)
+	}
+
+	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		cfg.Database.Host, cfg.Database.Port, cfg.Database.User, cfg.Database.Password, cfg.Database.DBName,
+		cfg.Database.SSLMode)
+	db, err := Postgres.NewPostgres(connStr)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	if err = db.Ping(); err != nil {
@@ -56,10 +66,17 @@ func RunCLI() {
 }
 
 func RunWebGin() {
-	connStr := "host=172.24.96.1 port=5432 user=postgres password=postgres dbname=habits sslmode=disable"
-	db, err := sql.Open("postgres", connStr)
+	cfg, err := config.Init()
 	if err != nil {
-		log.Fatalf("sql open: %v", err)
+		log.Fatal(err)
+	}
+
+	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		cfg.Database.Host, cfg.Database.Port, cfg.Database.User, cfg.Database.Password, cfg.Database.DBName,
+		cfg.Database.SSLMode)
+	db, err := Postgres.NewPostgres(connStr)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	if err = db.Ping(); err != nil {
@@ -82,7 +99,8 @@ func RunWebGin() {
 
 	handler.InitRoutes(r)
 
-	err = r.Run("localhost:18080")
+	serverConnStr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
+	err = r.Run(serverConnStr)
 	if err != nil {
 		log.Fatal(err)
 	}
